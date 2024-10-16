@@ -1,5 +1,5 @@
 use buyable_counter::{
-    interface::ContractInterface,
+    interface::BuyableCounterI,
     msg::{ExecuteMsgFns, GetCountResponse, InstantiateMsg, QueryMsg, QueryMsgFns},
     ContractError,
 };
@@ -65,7 +65,8 @@ fn count() -> anyhow::Result<()> {
 }
 
 #[test]
-fn buy_admin() -> anyhow::Result<()> { // #4
+fn buy_admin() -> anyhow::Result<()> {
+    // #4
     // Create the mock. This will be our chain object throughout
     let mock = Mock::new(ADMIN);
     let user = mock.addr_make(USER);
@@ -81,11 +82,11 @@ fn buy_admin() -> anyhow::Result<()> { // #4
     // not enough funds
     let res = contract.buy_admin(coins(1000, "earth").as_slice());
 
-    let expected_err = ContractError::InvalidPayment { expected: Coin::new(1000u128, "earth"), received: Coin::new(1000u128, "earth") };
-    assert_eq!(
-        res.unwrap_err().downcast::<ContractError>()?,
-        expected_err
-    );
+    let expected_err = ContractError::InvalidPayment {
+        expected: Coin::new(1000u128, "earth"),
+        received: Coin::new(1000u128, "earth"),
+    };
+    assert_eq!(res.unwrap_err().downcast::<ContractError>()?, expected_err);
 
     contract.buy_admin(coins(1001, "earth").as_slice())?;
 
@@ -101,9 +102,9 @@ fn buy_admin() -> anyhow::Result<()> { // #4
 }
 
 /// Instantiate the contract in any CosmWasm environment
-fn setup<Chain: CwEnv>(chain: Chain) -> anyhow::Result<ContractInterface<Chain>> {
+fn setup<Chain: CwEnv>(chain: Chain) -> anyhow::Result<BuyableCounterI<Chain>> {
     // Construct the  interface
-    let contract = ContractInterface::new(chain.clone());
+    let contract = BuyableCounterI::new(chain.clone());
     let admin = Addr::unchecked(ADMIN);
 
     // Upload the contract

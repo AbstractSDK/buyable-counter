@@ -123,7 +123,9 @@ pub mod query {
         let address: Addr = deps.api.addr_validate(&address)?;
 
         let state = STATE.load(deps.storage)?;
-        let balance = deps.querier.query_balance(address, state.last_price.denom)?;
+        let balance = deps
+            .querier
+            .query_balance(address, state.last_price.denom)?;
         let can_buy = balance.amount > state.last_price.amount;
         Ok(CanBuyResponse { can_buy })
     }
@@ -210,6 +212,7 @@ mod tests {
 
     #[test]
     fn buy_admin() {
+        // #4
         let mut deps = mock_dependencies();
 
         let msg = InstantiateMsg {

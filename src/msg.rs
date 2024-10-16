@@ -11,9 +11,11 @@ pub struct InstantiateMsg {
 #[derive(cw_orch::ExecuteFns)]
 pub enum ExecuteMsg {
     Increment {},
-    Reset { count: i32 },
+    Reset {
+        count: i32,
+    },
     #[cw_orch(payable)] // #1
-    BuyAdmin {}
+    BuyAdmin {},
 }
 
 #[cw_serde]

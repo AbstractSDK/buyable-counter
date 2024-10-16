@@ -1,0 +1,1 @@
+a3701b98aa089aa260b47011fde6a9f7e5d2d8766784bde05955bec1b02a52cb  buyable_counter.wasm
