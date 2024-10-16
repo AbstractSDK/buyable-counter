@@ -1,13 +1,13 @@
 use buyable_counter::{
     interface::ContractInterface,
-    msg::{GetCountResponse, InstantiateMsg, QueryMsg},
+    msg::{ExecuteMsgFns, GetCountResponse, InstantiateMsg, QueryMsg, QueryMsgFns},
     ContractError,
 };
 // Use prelude to get all the necessary imports
 use cw_orch::anyhow;
 use cw_orch::prelude::*;
 
-use cosmwasm_std::Addr;
+use cosmwasm_std::{coins, Addr};
 
 // consts for testing
 const USER: &str = "user";
@@ -60,6 +60,42 @@ fn count() -> anyhow::Result<()> {
         exec_res.unwrap_err().downcast::<ContractError>()?,
         expected_err
     );
+
+    Ok(())
+}
+
+#[test]
+fn buy_admin() -> anyhow::Result<()> { // #4
+    // Create the mock. This will be our chain object throughout
+    let mock = Mock::new(ADMIN);
+    let user = mock.addr_make(USER);
+
+    let mut contract = setup(mock.clone())?;
+    contract.set_sender(&user);
+
+    mock.set_balance(&user, coins(1001, "earth"))?;
+
+    let can_buy = contract.can_buy(user.to_string())?;
+    assert_eq!(can_buy.can_buy, true);
+
+    // not enough funds
+    let res = contract.buy_admin(coins(1000, "earth").as_slice());
+
+    let expected_err = ContractError::InvalidPayment { expected: Coin::new(1000u128, "earth"), received: Coin::new(1000u128, "earth") };
+    assert_eq!(
+        res.unwrap_err().downcast::<ContractError>()?,
+        expected_err
+    );
+
+    contract.buy_admin(coins(1001, "earth").as_slice())?;
+
+    contract.reset(0)?;
+
+    let count = contract.get_count()?;
+    assert_eq!(count.count, 0);
+
+    let can_buy = contract.can_buy(user.to_string())?;
+    assert_eq!(can_buy.can_buy, false);
 
     Ok(())
 }

@@ -9,7 +9,7 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
     // #2
-    #[error("Invalid payment, expected at least {expected}, received {received}")]
+    #[error("Invalid payment, expected more than {expected}, received {received}")]
     InvalidPayment { expected: Coin, received: Coin },
     // Add any other custom errors you like here.
     // Look at https://docs.rs/thiserror/1.0.21/thiserror/ for details.
