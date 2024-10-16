@@ -1,8 +1,10 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Coin;
 
 #[cw_serde]
 pub struct InstantiateMsg {
     pub count: i32,
+    pub price: Coin, // #1
 }
 
 #[cw_serde]
@@ -10,6 +12,8 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     Increment {},
     Reset { count: i32 },
+    #[cw_orch(payable)] // #1
+    BuyAdmin {}
 }
 
 #[cw_serde]

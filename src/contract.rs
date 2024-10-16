@@ -21,6 +21,7 @@ pub fn instantiate(
     let state = State {
         count: msg.count,
         owner: info.sender.clone(),
+        last_price: msg.price, // #1
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     STATE.save(deps.storage, &state)?;
@@ -41,6 +42,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Increment {} => execute::increment(deps),
         ExecuteMsg::Reset { count } => execute::reset(deps, info, count),
+        ExecuteMsg::BuyAdmin {} => execute::buy_admin(deps, info), // #1
     }
 }
 
@@ -66,6 +68,13 @@ pub mod execute {
         })?;
         Ok(Response::new().add_attribute("action", "reset"))
     }
+
+    // #1
+    pub fn buy_admin(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
+        
+        Ok(Response::new().add_attribute("action", "buy_admin"))
+    }
+
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
