@@ -79,7 +79,10 @@ fn setup<Chain: CwEnv>(chain: Chain) -> anyhow::Result<ContractInterface<Chain>>
     assert_eq!(code_id, contract.code_id()?);
 
     // Instantiate the contract
-    let msg = InstantiateMsg { count: 1i32 };
+    let msg = InstantiateMsg {
+        count: 1i32,
+        price: Coin::new(1000u128, "earth"),
+    };
     let init_resp = contract.instantiate(&msg, Some(&admin), &[])?;
 
     // Get the address from the response

@@ -35,7 +35,14 @@ mod tests {
         let contract = ContractInterface::new(mock);
         contract.upload()?;
 
-        contract.instantiate(&InstantiateMsg { count: 7 }, None, &[])?;
+        contract.instantiate(
+            &InstantiateMsg {
+                count: 7,
+                price: Coin::new(1000u128, "earth"),
+            },
+            None,
+            &[],
+        )?;
         assert_eq!(contract.get_count()?.count, 7);
 
         contract.increment()?;
