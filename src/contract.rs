@@ -81,7 +81,7 @@ pub mod execute {
             received: Coin::new(0u128, ""),
         })?;
 
-        if paid.denom != price.denom || paid.amount < price.amount {
+        if paid.denom != price.denom || paid.amount <= price.amount {
             return Err(ContractError::InvalidPayment {
                 expected: price,
                 received: paid.clone(),
@@ -102,15 +102,30 @@ pub mod execute {
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetCount {} => to_json_binary(&query::count(deps)?),
+        QueryMsg::CanBuy { address } => to_json_binary(&query::can_buy(deps, address)?), // #3
     }
 }
 
 pub mod query {
+    use cosmwasm_std::Addr;
+
+    use crate::msg::CanBuyResponse;
+
     use super::*;
 
     pub fn count(deps: Deps) -> StdResult<GetCountResponse> {
         let state = STATE.load(deps.storage)?;
         Ok(GetCountResponse { count: state.count })
+    }
+
+    pub fn can_buy(deps: Deps, address: String) -> StdResult<CanBuyResponse> {
+        // Address validation
+        let address: Addr = deps.api.addr_validate(&address)?;
+
+        let state = STATE.load(deps.storage)?;
+        let balance = deps.querier.query_balance(address, state.last_price.denom)?;
+        let can_buy = balance.amount > state.last_price.amount;
+        Ok(CanBuyResponse { can_buy })
     }
 }
 
@@ -216,7 +231,7 @@ mod tests {
             _ => panic!("Must return invalid payment error"),
         }
 
-        let info = message_info(&new_admin, &coins(1000, "earth"));
+        let info = message_info(&new_admin, &coins(1001, "earth"));
         let _res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
         // reset count with new admin
