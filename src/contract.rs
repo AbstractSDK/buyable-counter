@@ -47,6 +47,8 @@ pub fn execute(
 }
 
 pub mod execute {
+    use cosmwasm_std::Coin;
+
     use super::*;
 
     pub fn increment(deps: DepsMut) -> Result<Response, ContractError> {
@@ -70,11 +72,30 @@ pub mod execute {
     }
 
     // #1
-    pub fn buy_admin(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
-        
+    pub fn buy_admin(deps: DepsMut, mut info: MessageInfo) -> Result<Response, ContractError> {
+        // #2
+        let state = STATE.load(deps.storage)?;
+        let price = state.last_price;
+        let coin = info.funds.pop().ok_or(ContractError::InvalidPayment {
+            expected: price.clone(),
+            received: Coin::new(0u128, ""),
+        })?;
+
+        if coin.denom != price.denom || coin.amount < price.amount {
+            return Err(ContractError::InvalidPayment {
+                expected: price,
+                received: coin.clone(),
+            });
+        }
+
+        STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
+            state.owner = info.sender.clone();
+            state.last_price = info.funds[0].clone();
+            Ok(state)
+        })?;
+
         Ok(Response::new().add_attribute("action", "buy_admin"))
     }
-
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
