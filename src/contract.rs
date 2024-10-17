@@ -94,7 +94,9 @@ pub mod execute {
             Ok(state)
         })?;
 
-        Ok(Response::new().add_attribute("action", "buy_admin"))
+        Ok(Response::new()
+            .add_attribute("action", "buy_admin")
+            .add_attribute("new_price", &paid.to_string()))
     }
 }
 
@@ -214,32 +216,36 @@ mod tests {
     fn buy_admin() {
         // #4
         let mut deps = mock_dependencies();
+        let sender = deps.api.addr_make("creator");
+        let info = message_info(&sender, &[]);
 
         let msg = InstantiateMsg {
             count: 17,
             price: Coin::new(1000u128, "earth"),
         };
-        let info = message_info(&deps.api.addr_make("creator"), &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let new_admin = deps.api.addr_make("new_admin");
-        let info = message_info(&new_admin, &coins(0, "earth"));
+        let info = message_info(&new_admin, &coins(1, "earth"));
+
         let msg = ExecuteMsg::BuyAdmin {};
         let res = execute(deps.as_mut(), mock_env(), info, msg.clone());
         match res {
             Err(ContractError::InvalidPayment { expected, received }) => {
                 assert_eq!(expected, Coin::new(1000u128, "earth"));
-                assert_eq!(received, Coin::new(0u128, "earth"));
+                assert_eq!(received, Coin::new(1u128, "earth"));
             }
             _ => panic!("Must return invalid payment error"),
         }
 
         let info = message_info(&new_admin, &coins(1001, "earth"));
-        let _res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info.clone(), msg);
+        assert!(res.is_ok());
 
         // reset count with new admin
         let msg = ExecuteMsg::Reset { count: 5 };
-        let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info.clone(), msg);
+        assert!(res.is_ok());
 
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
         let value: GetCountResponse = from_json(&res).unwrap();

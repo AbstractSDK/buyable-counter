@@ -20,8 +20,14 @@ fn count() -> anyhow::Result<()> {
     // Create the mock. This will be our chain object throughout
     let mock = Mock::new(ADMIN);
 
-    // Set up the contract (Definition below) ↓↓
-    let contract = setup(mock.clone())?;
+    let contract = BuyableCounterI::deploy(
+        mock.clone(),
+        InstantiateMsg {
+            count: 1,
+            price: Coin::new(1000u128, "earth"),
+        },
+        mock.sender.clone(),
+    )?;
 
     // Increment the count of the contract
     contract
@@ -71,7 +77,15 @@ fn buy_admin() -> anyhow::Result<()> {
     let mock = Mock::new(ADMIN);
     let user = mock.addr_make(USER);
 
-    let mut contract = setup(mock.clone())?;
+    let mut contract = BuyableCounterI::deploy(
+        mock.clone(),
+        InstantiateMsg {
+            count: 0,
+            price: Coin::new(1000u128, "earth"),
+        },
+        mock.sender.clone(),
+    )?;
+
     contract.set_sender(&user);
 
     mock.set_balance(&user, coins(1001, "earth"))?;
@@ -99,34 +113,4 @@ fn buy_admin() -> anyhow::Result<()> {
     assert_eq!(can_buy.can_buy, false);
 
     Ok(())
-}
-
-/// Instantiate the contract in any CosmWasm environment
-fn setup<Chain: CwEnv>(chain: Chain) -> anyhow::Result<BuyableCounterI<Chain>> {
-    // Construct the  interface
-    let contract = BuyableCounterI::new(chain.clone());
-    let admin = Addr::unchecked(ADMIN);
-
-    // Upload the contract
-    let upload_resp = contract.upload()?;
-
-    // Get the code-id from the response.
-    let code_id = upload_resp.uploaded_code_id()?;
-    // or get it from the interface.
-    assert_eq!(code_id, contract.code_id()?);
-
-    // Instantiate the contract
-    let msg = InstantiateMsg {
-        count: 1i32,
-        price: Coin::new(1000u128, "earth"),
-    };
-    let init_resp = contract.instantiate(&msg, Some(&admin), &[])?;
-
-    // Get the address from the response
-    let contract_addr = init_resp.instantiated_contract_address()?;
-    // or get it from the interface.
-    assert_eq!(contract_addr, contract.address()?);
-
-    // Return the interface
-    Ok(contract)
 }

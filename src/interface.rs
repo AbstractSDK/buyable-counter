@@ -22,3 +22,24 @@ impl<Chain: CwEnv> Uploadable for BuyableCounterI<Chain> {
         ))
     }
 }
+
+impl<Chain: CwEnv> BuyableCounterI<Chain> {
+    /// Instantiate the contract in any CosmWasm environment
+    pub fn deploy(
+        chain: Chain,
+        instantiate_msg: InstantiateMsg,
+        admin: Addr,
+    ) -> cw_orch::anyhow::Result<BuyableCounterI<Chain>> {
+        // Construct the  interface
+        let contract = BuyableCounterI::new(chain.clone());
+
+        // Upload the contract
+        contract.upload()?;
+
+        // Instantiate the contract
+        contract.instantiate(&instantiate_msg, Some(&admin), &[])?;
+
+        // Return the interface
+        Ok(contract)
+    }
+}
